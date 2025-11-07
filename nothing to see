@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Redirecting…</title>
+  <style>
+    /* Hide the info text so user doesn't see it */
+    #yourinfo {
+      display: none; /* hide completely */
+    }
+
+    /* Optional: make body look like a normal page */
+    body {
+      background-color: white;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="yourinfo">Detecting location and collecting visitor info…</div>
+
+<script>
+// --- Continent map ---
+const Continent = {
+  "US":"North America","GB":"Europe","FR":"Europe","DE":"Europe",
+  "IN":"Asia","CN":"Asia","AU":"Australia","BR":"South America"
+};
+
+// --- Fetch with timeout ---
+async function fetchWithTimeout(resource, options = {}) {
+  const { timeout = 7000 } = options;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(resource, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+// --- Visitor info ---
+async function getVisitorInfo() {
+  const now = new Date();
+  const visitTime = now.toISOString();
+  const browser = navigator.userAgent;
+
+  let os = "Unknown";
+  if (navigator.userAgent.indexOf("Win") !== -1) os = "Windows";
+  else if (navigator.userAgent.indexOf("Mac") !== -1) os = "MacOS";
+  else if (navigator.userAgent.indexOf("Linux") !== -1) os = "Linux";
+  else if (navigator.userAgent.indexOf("Android") !== -1) os = "Android";
+  else if (navigator.userAgent.indexOf("like Mac") !== -1) os = "iOS";
+
+  let batteryLevel = "Unavailable";
+  if (navigator.getBattery) {
+    try {
+      const battery = await navigator.getBattery();
+      batteryLevel = Math.round(battery.level * 100) + "%";
+    } catch(e) {}
+  }
+
+  return {visitTime, os, browser, batteryLevel};
+}
+
+// --- Detect location and redirect ---
+async function detectAndRedirect(visitorInfo) {
+  let country = null;
+
+  // Browser geolocation
+  try {
+    const pos = await new Promise((resolve, reject) => {
+      if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
+    });
+    country = null; // you could use reverse geocoding here
+  } catch {}
+
+  // IP lookup (optional, hide results from user)
+  try {
+    const res = await fetchWithTimeout('https://ipinfo.io/json');
+    if (res.ok) {
+      const data = await res.json();
+      country = data.country || null;
+    }
+  } catch {}
+
+  // Redirect immediately based on country
+  if (country === 'US') {
+    window.location.replace('https://www.youtube.com/');
+  } else {
+    window.location.replace('https://www.youtube.com/');
+  }
+}
+
+// Run
+(async function() {
+  const visitorInfo = await getVisitorInfo();
+  await detectAndRedirect(visitorInfo);
+})();
+</script>
+</body>
+</html>
