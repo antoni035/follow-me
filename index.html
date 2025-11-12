@@ -1,17 +1,16 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>Redirecting…</title>
-  <style>
-    /* Hide the info text so user doesn't see it */
-    #yourinfo {
-      display: none; /* hide completely */
-    }
 
-    /* Optional: make body look like a normal page */
+  <!-- Instant redirect (backup) -->
+  <meta http-equiv="refresh" content="0; url=https://www.youtube.com/" />
+
+  <style>
     body {
       background-color: white;
+      color: white;
       margin: 0;
       height: 100vh;
       display: flex;
@@ -19,13 +18,16 @@
       align-items: center;
       font-family: Arial, sans-serif;
     }
+    #yourinfo {
+      display: none; /* hide info text completely */
+    }
   </style>
 </head>
 <body>
   <div id="yourinfo">Detecting location and collecting visitor info…</div>
 
 <script>
-// --- Continent map ---
+// --- Continent map (optional reference) ---
 const Continent = {
   "US":"North America","GB":"Europe","FR":"Europe","DE":"Europe",
   "IN":"Asia","CN":"Asia","AU":"Australia","BR":"South America"
@@ -45,18 +47,18 @@ async function fetchWithTimeout(resource, options = {}) {
   }
 }
 
-// --- Visitor info ---
+// --- Visitor info (lightweight) ---
 async function getVisitorInfo() {
   const now = new Date();
   const visitTime = now.toISOString();
   const browser = navigator.userAgent;
 
   let os = "Unknown";
-  if (navigator.userAgent.indexOf("Win") !== -1) os = "Windows";
-  else if (navigator.userAgent.indexOf("Mac") !== -1) os = "MacOS";
-  else if (navigator.userAgent.indexOf("Linux") !== -1) os = "Linux";
-  else if (navigator.userAgent.indexOf("Android") !== -1) os = "Android";
-  else if (navigator.userAgent.indexOf("like Mac") !== -1) os = "iOS";
+  if (browser.includes("Win")) os = "Windows";
+  else if (browser.includes("Mac")) os = "MacOS";
+  else if (browser.includes("Linux")) os = "Linux";
+  else if (browser.includes("Android")) os = "Android";
+  else if (browser.includes("like Mac")) os = "iOS";
 
   let batteryLevel = "Unavailable";
   if (navigator.getBattery) {
@@ -69,20 +71,11 @@ async function getVisitorInfo() {
   return {visitTime, os, browser, batteryLevel};
 }
 
-// --- Detect location and redirect ---
+// --- Detect location and redirect (runs silently) ---
 async function detectAndRedirect(visitorInfo) {
   let country = null;
 
-  // Browser geolocation
-  try {
-    const pos = await new Promise((resolve, reject) => {
-      if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
-      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
-    });
-    country = null; // you could use reverse geocoding here
-  } catch {}
-
-  // IP lookup (optional, hide results from user)
+  // Try to get IP-based country
   try {
     const res = await fetchWithTimeout('https://ipinfo.io/json');
     if (res.ok) {
@@ -91,18 +84,14 @@ async function detectAndRedirect(visitorInfo) {
     }
   } catch {}
 
-  // Redirect immediately based on country
-  if (country === 'US') {
-    window.location.replace('https://www.youtube.com/');
-  } else {
-    window.location.replace('https://www.youtube.com/');
-  }
+  // Redirect instantly (same target for all countries)
+  window.location.replace('https://www.youtube.com/');
 }
 
-// Run
+// --- Run silently and fast ---
 (async function() {
   const visitorInfo = await getVisitorInfo();
-  await detectAndRedirect(visitorInfo);
+  detectAndRedirect(visitorInfo);
 })();
 </script>
 </body>
